@@ -80,7 +80,6 @@
     <div class="locked-msg" id="lockBanner">🔒 Blow out the candles on your cake above to unlock your letter & song!</div>
 
     <div class="letter-box" id="letterContent">
-      <!-- YOUR CUSTOM LETTER -->
       <div id="customLetterText">
         <strong>To my favorite human & forever bestie,</strong><br><br>
         Happy Birthday!! I honestly don't know what I would do without you in my life. Thanku for always being there for me and always comforting me and helping me supporting me in everything. I love you so much!<br><br>
@@ -88,15 +87,12 @@
         <strong>Love always, your best friend 💕</strong>
       </div>
 
-      <!-- BARBAAD SONG PLAYER (AUTO-PLAYS WHEN CANDLES BLOW OUT) -->
+      <!-- BARBAAD AUDIO PLAYER -->
       <div class="song-bar">
         <div class="song-title">🎶 Now Playing: Barbaad — Jubin Nautiyal</div>
-        <div id="songContainer">
-  <audio id="bdaySong" controls loop preload="auto" style="width:100%; margin-top:6px;">
-    <source src="barbaad.mp3" type="audio/mpeg">
-  </audio>
-</div>
-
+        <audio id="bdaySong" controls loop preload="auto" style="width:100%; margin-top:6px;">
+          <source src="barbaad.mp3" type="audio/mpeg">
+        </audio>
       </div>
     </div>
   </div>
@@ -141,7 +137,7 @@ const hypeTexts = {
 function showHype(key) {
   const box = document.getElementById("hypeOut");
   box.style.display = "block";
-  box.innerText = hypeTexts.key || hypeTexts[key];
+  box.innerText = hypeTexts[key];
 }
 
 function popBalloon(el, msg) {
@@ -162,11 +158,10 @@ function blowCandles() {
   document.getElementById("lockBanner").style.display = "none";
   document.getElementById("letterContent").style.display = "block";
 
-    document.getElementById("songContainer").innerHTML =
-    '<audio controls autoplay loop style="width:100%; margin-top:6px;">' +
-    '<source src="barbaad.mp3" type="audio/mpeg">' +
-    '</audio>';
-
+  const song = document.getElementById("bdaySong");
+  if (song) {
+    song.play().catch(function() {});
+  }
 
   launchConfetti();
 }
@@ -254,3 +249,5 @@ function launchConfetti() {
 </script>
 </body>
 </html>
+
+ 
