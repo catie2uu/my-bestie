@@ -35,8 +35,6 @@
   @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 
   .letter-box { background: #fff9db; border: 2px dashed #fcc419; border-radius: 18px; padding: 20px; text-align: left; line-height: 1.65; font-size: 15px; color: #5c3c10; display: none; margin-top: 14px; }
-  .song-bar { margin-top: 14px; background: #fff0f6; border: 1.5px solid #faa2c1; border-radius: 14px; padding: 12px; text-align: center; }
-  .song-title { font-size: 13px; font-weight: 700; color: #c2255c; margin-bottom: 8px; }
   .locked-msg { background: #fff0f6; padding: 14px; border-radius: 12px; font-size: 14px; color: #c2255c; font-weight: 600; margin-top: 10px; }
   .out-box { background: #fff0f6; border-radius: 14px; padding: 14px; margin-top: 12px; font-size: 14px; color: #862e9c; display: none; line-height: 1.5; }
   canvas#confetti { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 99; }
@@ -74,26 +72,13 @@
 
   <div class="card">
     <h2>💌 Secret Bestie Letter</h2>
-    <div class="locked-msg" id="lockBanner">🔒 Blow out the candles on your cake above to unlock your letter & song!</div>
+    <div class="locked-msg" id="lockBanner">🔒 Blow out the candles on your cake above to unlock your birthday letter!</div>
 
     <div class="letter-box" id="letterContent">
-      <div id="customLetterText">
-        <strong>To my favorite human & forever bestie,</strong><br><br>
-        Happy Birthday!! I honestly don't know what I would do without you in my life. Thanku for always being there for me and always comforting me and helping me supporting me in everything. I love you so much!<br><br>
-        You deserve every ounce of happiness, love, and good energy this year. No matter where life takes us, you're stuck with me forever. Let's make this your best year yet! 🥂💖<br><br>
-        <strong>Love always, your best friend 💕</strong>
-      </div>
-    </div>
-
-    <div class="song-bar">
-      <div class="song-title">🎶 Song: Barbaad — Jubin Nautiyal</div>
-      <audio id="bdaySong" controls loop preload="auto" src="barbaad.mp3" style="width:100%;"></audio>
-        <source src="barbaad.mp3" type="audio/mpeg">
-        <source src="Barbaad.mp3" type="audio/mpeg">
-        <source src="barbaad.m4a" type="audio/mp4">
-        <source src="Barbaad.m4a" type="audio/mp4">
-        <source src="barbaad.wav" type="audio/wav">
-      </audio>
+      <strong>To my favorite human & forever bestie,</strong><br><br>
+      Happy Birthday!! I honestly don't know what I would do without you in my life. Thanku for always being there for me and always comforting me and helping me supporting me in everything. I love you so much!<br><br>
+      You deserve every ounce of happiness, love, and good energy this year. No matter where life takes us, you're stuck with me forever. Let's make this your best year yet! 🥂💖<br><br>
+      <strong>Love always, your best friend 💕</strong>
     </div>
   </div>
 
@@ -135,7 +120,7 @@ const hypeTexts = {
 function showHype(key) {
   const box = document.getElementById("hypeOut");
   box.style.display = "block";
-  box.innerText = hypeTexts.key || hypeTexts.why;
+  if (key === "why") box.innerText = hypeTexts.why;
   if (key === "promise") box.innerText = hypeTexts.promise;
   if (key === "vibe") box.innerText = hypeTexts.vibe;
   if (key === "hug") box.innerText = hypeTexts.hug;
@@ -155,15 +140,10 @@ function blowCandles() {
   document.getElementById("f1").classList.add("out");
   document.getElementById("f2").classList.add("out");
   document.getElementById("f3").classList.add("out");
-  document.getElementById("cakeHint").innerText = "🎉 YAY! Your wish is locked in & Barbaad is playing!";
+  document.getElementById("cakeHint").innerText = "🎉 YAY! Your wish is locked in & your letter is unlocked!";
   document.getElementById("lockBanner").style.display = "none";
   document.getElementById("letterContent").style.display = "block";
-
-  const song = document.getElementById("bdaySong");
-  if (song) {
-    song.play().catch(function() {});
-  }
-
+  playBirthdayTune();
   launchConfetti();
 }
 
@@ -213,6 +193,13 @@ function playTone(freq, dur) {
     osc.start();
     osc.stop(ctx.currentTime + dur);
   } catch (e) {}
+}
+
+function playBirthdayTune() {
+  const notes = Array.of(261.63, 261.63, 293.66, 261.63, 349.23, 329.63);
+  notes.forEach(function(f, idx) {
+    setTimeout(function() { playTone(f, 0.35); }, idx * 320);
+  });
 }
 
 function launchConfetti() {
