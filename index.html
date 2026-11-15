@@ -39,6 +39,9 @@
   /* LETTER */
   .letter-box { background: #fff9db; border: 2px dashed #fcc419; border-radius: 18px; padding: 20px; text-align: left; line-height: 1.65; font-size: 15px; color: #5c3c10; display: none; margin-top: 14px; }
   .locked-msg { background: #fff0f6; padding: 14px; border-radius: 12px; font-size: 14px; color: #c2255c; font-weight: 600; margin-top: 10px; }
+  .song-bar { margin-top: 16px; padding-top: 14px; border-top: 2px dashed #fcc41988; }
+  .song-title { font-size: 14px; font-weight: 700; color: #a61e4d; }
+  .song-note { font-size: 12px; color: #a61e4d; margin-top: 6px; display: none; }
   .out-box { background: #fff0f6; border-radius: 14px; padding: 14px; margin-top: 12px; font-size: 14px; color: #862e9c; display: none; line-height: 1.5; }
   canvas#confetti { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 99; }
 </style>
@@ -52,7 +55,8 @@
     <h1>Happy Birthday, Bestie! 🥂</h1>
     <p class="sub">Today is all about celebrating the prettiest, funniest, most iconic soul sister ever.</p>
   </div>
-   <!-- INTERACTIVE CAKE -->
+
+  <!-- INTERACTIVE CAKE -->
   <div class="card">
     <h2>🎂 Make a Wish & Blow the Candles!</h2>
     <p class="sub" id="cakeHint">Tap "Use Mic to Blow" and blow into your phone, OR tap the button below!</p>
@@ -87,12 +91,10 @@
         <strong>Love always, your best friend 💕</strong>
       </div>
 
-      <!-- BARBAAD AUDIO PLAYER -->
       <div class="song-bar">
         <div class="song-title">🎶 Now Playing: Barbaad — Jubin Nautiyal</div>
-        <audio id="bdaySong" controls loop preload="auto" style="width:100%; margin-top:6px;">
-          <source src="barbaad.mp3" type="audio/mpeg">
-        </audio>
+        <audio id="bdaySong" controls loop preload="auto" playsinline src="barbaad.mp3" style="width:100%; margin-top:8px;"></audio>
+        <div class="song-note" id="songNote"></div>
       </div>
     </div>
   </div>
@@ -114,7 +116,7 @@
   <div class="card">
     <h2>✨ Tap for Bestie Hype</h2>
     <div class="grid">
-      <button type="button" class="btn-soft" onclick="showHype('why')">👯‍♀️ Why You're Iconic</button>
+      <button type="button" class="btn-soft" onclick="showHype('why')">👯♀️ Why You're Iconic</button>
       <button type="button" class="btn-soft" onclick="showHype('promise')">🤞 Bestie Promise</button>
       <button type="button" class="btn-soft" onclick="showHype('vibe')">💅 Birthday Forecast</button>
       <button type="button" class="btn-soft" onclick="showHype('hug')">🫂 Virtual Birthday Hug</button>
@@ -126,6 +128,8 @@
 
 <script>
 let candlesOut = false;
+const song = document.getElementById("bdaySong");
+const songNote = document.getElementById("songNote");
 
 const hypeTexts = {
   why: "Because you have the biggest heart, the funniest sense of humor, and you make every single room brighter just by walking into it!",
@@ -133,6 +137,53 @@ const hypeTexts = {
   vibe: "100% chance of main-character energy, glowing skin, zero stress, and getting spoiled all week long!",
   hug: "Sending you the biggest, warmest birthday squeeze through the screen right now!! 🤗💕"
 };
+
+/* ---------- AUDIO ---------- */
+
+// If the mp3 can't be found/loaded, tell the user instead of failing silently
+song.addEventListener("error", function () {
+  songNote.style.display = "block";
+  songNote.innerText = "⚠️ Couldn't load barbaad.mp3 — check the file name & that it's in the same folder as index.html.";
+});
+
+// Browsers only allow sound after a real tap. On the very first tap anywhere
+// (mic button, balloon, etc.) we silently "unlock" the audio element so that
+// it can start later when the candles go out (even from mic blowing).
+let audioUnlocked = false;
+function unlockAudio() {
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+  song.muted = true;
+  const p = song.play();
+  if (p && p.then) {
+    p.then(function () {
+      if (!candlesOut) {          // candles not blown yet -> stop it again
+        song.pause();
+        song.currentTime = 0;
+      }
+      song.muted = false;
+    }).catch(function () {
+      song.muted = false;
+      audioUnlocked = false;      // try again on next tap
+    });
+  }
+}
+document.addEventListener("pointerdown", unlockAudio, { once: false });
+document.addEventListener("touchstart", unlockAudio, { passive: true });
+
+function playSong() {
+  song.muted = false;
+  const p = song.play();
+  if (p && p.catch) {
+    p.catch(function (err) {
+      console.log("Autoplay blocked:", err);
+      document.getElementById("cakeHint").innerText =
+        "🎉 Candles out! Tap ▶ on the player to hear Barbaad 🎶";
+    });
+  }
+}
+
+/* ---------- UI ---------- */
 
 function showHype(key) {
   const box = document.getElementById("hypeOut");
@@ -158,11 +209,7 @@ function blowCandles() {
   document.getElementById("lockBanner").style.display = "none";
   document.getElementById("letterContent").style.display = "block";
 
-  const song = document.getElementById("bdaySong");
-  if (song) {
-    song.play().catch(function() {});
-  }
-
+  playSong();
   launchConfetti();
 }
 
@@ -177,18 +224,20 @@ async function enableMic() {
     mic.connect(analyser);
     const data = new Uint8Array(analyser.frequencyBinCount);
 
+    function stopMic() {
+      stream.getTracks().forEach(function (t) { t.stop(); });
+      audioCtx.close().catch(function () {});
+    }
+
     function detectBlow() {
-      if (candlesOut) {
-        stream.getTracks().forEach(function(t) { t.stop(); });
-        return;
-      }
+      if (candlesOut) { stopMic(); return; }
       analyser.getByteFrequencyData(data);
       let sum = 0;
-      for (let i = 0; i < data.length; i++) sum += data.at(i);
+      for (let i = 0; i < data.length; i++) sum += data[i];
       const avg = sum / data.length;
       if (avg > 45) {
+        stopMic();
         blowCandles();
-        stream.getTracks().forEach(function(t) { t.stop(); });
       } else {
         requestAnimationFrame(detectBlow);
       }
@@ -219,21 +268,21 @@ function launchConfetti() {
   const ctx = canvas.getContext("2d");
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-  const pieces = Array.of();
-  const colors = Array.of("#f06595", "#fcc419", "#cc5de8", "#4dabf7", "#69db7c");
+  const pieces = [];
+  const colors = ["#f06595", "#fcc419", "#cc5de8", "#4dabf7", "#69db7c"];
   for (let i = 0; i < 90; i++) {
     pieces.push({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height - canvas.height,
       r: Math.random() * 6 + 4,
-      c: colors.at(Math.floor(Math.random() * colors.length)),
+      c: colors[Math.floor(Math.random() * colors.length)],
       s: Math.random() * 3 + 2
     });
   }
   let frames = 0;
   function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    pieces.forEach(function(p) {
+    pieces.forEach(function (p) {
       ctx.fillStyle = p.c;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
@@ -249,5 +298,3 @@ function launchConfetti() {
 </script>
 </body>
 </html>
-
- 
